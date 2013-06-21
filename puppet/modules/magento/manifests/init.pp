@@ -20,11 +20,22 @@ class magento( $install, $db_user, $db_pass, $version, $admin_user, $admin_pass,
             require => Exec["grant-magentodb-db-all"],
         }
 
+	  exec { "MySQL flush privileges":
+	    command     => "/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf flush-privileges",
+	    refreshonly => true,
+	    require     => Service["mysql"],
+	  }
+
         exec { "download-magento":
             cwd     => "/tmp",
             command => "/usr/bin/wget http://www.magentocommerce.com/downloads/assets/${version}/magento-${version}.tar.gz",
             creates => "/tmp/magento-${version}.tar.gz",
         }
+
+		file { $apache2::document_root:
+		    ensure => "directory",
+		}
+
 
         exec { "untar-magento":
             cwd     => $apache2::document_root,
@@ -55,10 +66,10 @@ class magento( $install, $db_user, $db_pass, $version, $admin_user, $admin_pass,
                 --db_name \"magentodb\" \
                 --db_user \"${db_user}\" \
                 --db_pass \"${db_pass}\" \
-                --url \"http://magento.localhost:8080/magento\" \
+                --url \"http://localhost:8080/magento\" \
                 --use_rewrites \"${use_rewrites}\" \
                 --use_secure \"no\" \
-                --secure_base_url \"http://magento.localhost:8080/magento\" \
+                --secure_base_url \"http://localhost:8080/magento\" \
                 --use_secure_admin \"no\" \
                 --skip_url_validation \"yes\" \
                 --admin_firstname \"Store\" \
